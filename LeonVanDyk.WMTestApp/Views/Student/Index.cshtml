@@ -1,0 +1,135 @@
+﻿@model IEnumerable<LeonVanDyk.WMTestApp.Models.Student>
+
+@{
+    ViewBag.Title = "Students";
+}
+
+<h2>Students</h2>
+
+<p>
+    @if (ViewBag.MayAddStudent)
+    {
+        @*@Html.ActionLink("Add Student", "Create", null, new { @type = "button", @class = "btn btn-primary" })*@
+        <a type="button" class="btn btn-primary" href="#student-popup" data-toggle="modal">Add Student</a>
+    }
+    else
+    {
+        @:<h4>You do not have the correct permissions to change student records.</h4>
+    }
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.FullName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Gender)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Age)
+        </th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.FullName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Gender)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Age)
+            </td>
+            <td>
+                @if (ViewBag.MayAddStudent)
+                {
+                    <a type="button" class="btn mylink" href="#edit-student-popup" data-toggle="modal" data-id="@item.StudentID">edit</a>
+                }
+            </td>
+        </tr>
+    }
+
+</table>
+
+<!-- Modal Student -->
+<div class="modal fade" id="student-popup" role="dialog">
+    <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 id="edit-or-new" class="modal-title">Student</h4>
+            </div>
+            <div class="modal-body">
+                @Html.Partial("_StudentForm", new LeonVanDyk.WMTestApp.Models.Student())
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <a id="submit-student" href="#" class="btn btn-primary">Save Changes</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    @Scripts.Render("~/bundles/jqueryval")
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#submit-student").on("click", function () {
+                console.log('#submit-student clicked')
+                var url = "/Student/Create";
+                if ($('#edit-or-new').text() == "Edit") {
+                    url = "/Student/Update";
+                }
+                var postData = $("form").serialize();
+                console.log(postData);
+                $.post(url, postData, function (data) {
+                    if (data == "OK") {
+                        $("button[data-dismiss='modal']").click();
+                        window.location.href = "/Student/Index";
+                    }
+                    else {
+                        alert("Something went wrong, please retry!")
+                    }
+                })
+            });
+
+            $(".btn.mylink").on("click", function () {
+                $('#edit-or-new').text("Edit");
+                $('#student-popup').modal('show');
+                var studentId = $(this).data('id');
+                console.log("edit link clicked for id " + studentId);
+                $.ajax({
+                    url: "/Student/get/" + studentId,
+                    cache: false
+                }).done(function (data) {
+                    $("#Salutation").val(data.Salutation);
+                    $("#FirstName").val(data.FirstName);
+                    $("#Surname").val(data.Surname);
+                    $("#Age").val(data.Age);
+                    $("#Gender").val(data.Gender);
+                    $("#StudentID").val(studentId); //hidden on edit form
+                });
+            });
+
+            $('#student-popup').on('hidden.bs.modal', function () {
+                console.log('modal hidden');
+                $("#Salutation").val('');
+                $("#FirstName").val('');
+                $("#Surname").val('');
+                $("#Age").val('');
+                $("#Gender").val('');
+                $("#StudentID").val(0); //hidden on edit form
+                $('#edit-or-new').text("Student");
+            });
+
+        });
+    </script>
+
+}
+
